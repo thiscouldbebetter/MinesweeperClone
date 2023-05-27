@@ -1,0 +1,230 @@
+<html>
+<body>
+
+<h3>MinesweeperClone</h3>
+
+<p>
+	Click the squares. If the square contains a mine, you lose.
+	If the square contains no mine, then it will show the number
+	of adjacent squares that do contain mines.  To win, click all
+	the squares that do not contain mines.
+</p>
+
+<script type='text/javascript'>
+
+// main
+class Minesweeper
+{
+	main()
+	{
+		var field0 = new Field
+		(
+			new Coords(10, 10), // sizeInCells
+			10 // numberOfMines
+		);
+		Globals.Instance.initialize ( field0 );
+	}
+}
+
+// classes
+
+class Coords
+{
+	constructor(x, y)
+	{
+		this.x = x; this.y = y;
+	}
+
+	clone()
+	{
+		return new Coords(this.x, this.y);
+	}
+
+	isWithinRange(range)
+	{
+		var returnValue =
+		(
+			this.x >= 0
+			&& this.x < range.x
+			&& this.y >= 0
+			&& this.y < range.y
+		);
+		return returnValue;
+	}
+}
+
+class Field
+{
+	constructor(sizeInCells, numberOfMines)
+	{
+		this.sizeInCells = sizeInCells;
+		this.numberOfMines = numberOfMines;
+		this.numberOfCellsHidden = this.sizeInCells.x * this.sizeInCells.y;
+		this.buildCells();
+	}
+
+	// static methods
+
+	static buttonCellClicked(event)
+	{
+		var buttonForCell = event.target;
+		var cellPos = buttonForCell.cellPos;
+		var field = Globals.Instance.field;
+		var cell = field.getCellAtPos(cellPos);
+		if (cell.isMinePresent)
+		{
+			buttonForCell.innerHTML = "!";
+			alert("You clicked on a mine! You lose!");
+		}
+		else if (cell.isHidden)
+		{
+			cell.isHidden = false;
+			buttonForCell.innerHTML = cell.numberOfMinesInNeighbors;
+			field.numberOfCellsHidden--;
+			if (field.numberOfCellsHidden == field.numberOfMines)
+			{
+				alert("You found all the mines! You win!");
+			}
+		}
+	}
+
+	// instance methods
+	buildCells()
+	{
+		this.cells = [];
+		var cellPos = new Coords(0, 0);
+		for (var y = 0; y < this.sizeInCells.y; y++)
+		{
+			cellPos.y = y;
+			for (var x = 0; x < this.sizeInCells.x; x++)
+			{
+				cellPos.x = x;
+				var cellToSet = new FieldCell();
+				cellToSet.isHidden = true;
+				cellToSet.isMinePresent = false;
+				this.setCellAtPos(cellPos, cellToSet);
+			}
+		}
+
+		var numberOfMinesPlaced = 0;
+
+		while (numberOfMinesPlaced < this.numberOfMines)
+		{
+			var posRandom = new Coords
+			(
+				Math.floor(this.sizeInCells.x * Math.random()),
+				Math.floor(this.sizeInCells.y * Math.random())
+			);
+	
+			var cellAtPosRandom = this.getCellAtPos(posRandom);
+			if (cellAtPosRandom.isMinePresent == false)
+			{
+				cellAtPosRandom.isMinePresent = true;
+				numberOfMinesPlaced++;
+			}
+		}
+
+		for (var y = 0; y < this.sizeInCells.y; y++)
+		{
+			cellPos.y = y;
+			for (var x = 0; x < this.sizeInCells.x; x++)
+			{
+				cellPos.x = x;
+				var cellAtPos = this.getCellAtPos(cellPos);
+				if (cellAtPos.isMinePresent == false)
+				{
+					cellAtPos.numberOfMinesInNeighbors = 0;
+					var neighborPos = new Coords(0, 0);
+					for (var j = -1; j <= 1; j++)
+					{
+						neighborPos.y = cellPos.y + j;
+						for (var i = -1; i <= 1; i++)
+						{
+							neighborPos.x = cellPos.x + i;
+							if (neighborPos.isWithinRange(this.sizeInCells) )
+							{
+								var neighborCell = this.getCellAtPos(neighborPos);
+								if (neighborCell.isMinePresent)
+								{
+									cellAtPos.numberOfMinesInNeighbors++;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	getCellAtPos(cellPos)
+	{
+		return this.cells[this.getIndexOfCellAtPos(cellPos)];
+	}
+
+	getIndexOfCellAtPos(cellPos)
+	{
+		return cellPos.y * this.sizeInCells.x + cellPos.x;
+	}
+
+	setCellAtPos(cellPos, cellToSet)
+	{
+		this.cells[this.getIndexOfCellAtPos(cellPos)] = cellToSet;
+	}
+
+	// html
+	toHTMLElement()
+	{
+		var tableForField = document.createElement("table");
+		var cellPos = new Coords(0, 0);
+		for (var y = 0; y < this.sizeInCells.y; y++)
+		{
+			cellPos.y = y;
+			var trForRow = document.createElement("tr");
+			for (var x = 0; x < this.sizeInCells.x; x++)
+			{
+				cellPos.x = x;
+				var cellAtPos = this.getCellAtPos(cellPos);
+				var tdForCell = document.createElement("td");
+				var buttonForCell = document.createElement("button");
+				buttonForCell.innerHTML = "?";
+				buttonForCell.cellPos = cellPos.clone();
+				buttonForCell.onclick = Field.buttonCellClicked;
+				tdForCell.appendChild(buttonForCell);
+				trForRow.appendChild(tdForCell);
+			}
+			tableForField.appendChild(trForRow);
+		}
+
+		tableForField.field = this;
+		this.htmlElement = tableForField;
+		return tableForField;
+	}
+}
+
+class FieldCell
+{
+	constructor()
+	{
+		this.isMinePresent = false;
+	}
+}
+
+class Globals
+{
+	static Instance = new Globals();
+
+	initialize(field)
+	{
+		this.field = field;
+		var fieldAsHTMLElement = this.field.toHTMLElement();
+		document.body.appendChild(fieldAsHTMLElement);
+	}
+}
+
+// run
+
+new Minesweeper().main();
+
+</script>
+</body>
+</html>
