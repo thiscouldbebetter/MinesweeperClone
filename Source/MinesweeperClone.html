@@ -10,19 +10,105 @@
 	the squares that do not contain mines.
 </p>
 
+<div id="divUi">
+
+	<div>
+		<label>Size in Cells:</label>
+		<input
+			id="inputSizeInCellsX"
+			type="number" min="4" max="20" step="1"
+			value="10"
+		></input>
+		x
+		<input
+			id="inputSizeInCellsY"
+			type="number" min="4" max="20" step="1"
+			value="10"
+		></input>
+	</div>
+
+	<div>
+		<label>Number of Mines:</label>
+		<input
+			id="inputNumberOfMines"
+			type="number" min="1" max="40" step="1"
+			value="10"
+		></input>
+	</div>
+
+	<button onclick="buttonStart_Clicked()">Start</button>
+
+	<div>
+		<label>Time:</label>
+		<span id="spanSecondsSoFar">0<span>
+	</div>
+
+	<div id="divField"></div>
+
+</div>
+
 <script type='text/javascript'>
 
-// main
+// UI event handlers.
+
+function buttonStart_Clicked()
+{
+	var d = document;
+
+	var sizeInCellsX = parseInt
+	(
+		d.getElementById("inputSizeInCellsX").value
+	);
+	var sizeInCellsY = parseInt
+	(
+		d.getElementById("inputSizeInCellsY").value
+	);
+
+	var sizeInCells =
+		new Coords(sizeInCellsX, sizeInCellsY);
+
+	var numberOfMines = parseInt
+	(
+		d.getElementById("inputNumberOfMines").value
+	);
+
+	var game = new Minesweeper(sizeInCells, numberOfMines);
+	game.start();
+}
+
+// Main.
+
 class Minesweeper
 {
-	main()
+	constructor(sizeInCells, numberOfMines)
+	{
+		this.sizeInCells = sizeInCells;
+		this.numberOfMines = numberOfMines;
+	}
+
+	start()
 	{
 		var field0 = new Field
 		(
-			new Coords(10, 10), // sizeInCells
-			10 // numberOfMines
+			this.sizeInCells,
+			this.numberOfMines
 		);
 		Globals.Instance.initialize ( field0 );
+
+		var secondsSoFar = 0;
+
+		setInterval
+		(
+			() => 
+			{
+				secondsSoFar++;
+				var d = document;
+				var spanSecondsSoFar =
+					d.getElementById("spanSecondsSoFar");
+				spanSecondsSoFar.innerHTML = secondsSoFar;
+			},
+			1000 
+		);
 	}
 }
 
@@ -217,13 +303,12 @@ class Globals
 	{
 		this.field = field;
 		var fieldAsHTMLElement = this.field.toHTMLElement();
-		document.body.appendChild(fieldAsHTMLElement);
+		var d = document;
+		var divField = d.getElementById("divField");
+		divField.innerHTML = "";
+		divField.appendChild(fieldAsHTMLElement);
 	}
 }
-
-// run
-
-new Minesweeper().main();
 
 </script>
 </body>
